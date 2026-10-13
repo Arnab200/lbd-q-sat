@@ -2,5 +2,6 @@ torch
 python-sat
 pandas
 matplotlib
+seaborn
 scipy
 scikit-learn
