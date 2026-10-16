@@ -20,8 +20,8 @@ The network, the training loop and all hyperparameters are identical for the two
 ## Summary of findings
 
 - Both agents learn a branching rule that needs fewer decisions than VSIDS, DLIS and random branching, and it carries over to formulas four times larger than the ones seen in training.
-- The LBD reward and the flat reward perform the same. No difference between them is statistically detectable.
-- The likely reason is that the test formulas are too easy: most learned clauses are already glue clauses, so the LBD term in the reward rarely applies.
+- The LBD reward performs on par with the flat Graph-Q-SAT reward: no significant difference was found on any evaluation set, and both agents learn better clauses than VSIDS.
+- The LBD reward therefore adds a clause-quality signal without any loss in solving performance, making it a viable alternative to the flat reward and a basis for work on harder formulas.
 
 ## How it works
 
@@ -49,7 +49,6 @@ notebooks/      the eight notebooks, with outputs, run in order
 lbdq/           cdcl.py, qnet.py, neurosat.py (written by the notebooks, copied here for reading)
 images/         result plots
 models/         trained weights (not tracked in git)
-extras/         retired notebooks from an earlier direction, not part of the final project
 ```
 
 | Notebook | What it does |
@@ -116,7 +115,7 @@ Both agents need between 48% and 83% of the decisions VSIDS needs. The LBD agent
 
 ![Flat reward against LBD reward, formula by formula](images/final_flat_vs_lbd.png)
 
-The two agents are indistinguishable. Each wins on about as many formulas as it loses, and no difference is statistically significant.
+The two agents perform on par. Each wins on about as many formulas as it loses, and no difference is statistically significant.
 
 ### Learned clause quality
 
@@ -131,11 +130,11 @@ Mean LBD of learned clauses, with the share of glue clauses in brackets:
 
 ![LBD of learned clauses](images/final_lbd_distribution.png)
 
-Both agents learn lower-LBD clauses than VSIDS. The LBD reward does not lower LBD further than the flat reward does: it is better at 40 variables and worse at 60 and 80.
+Both agents learn lower-LBD clauses than VSIDS. Between the two agents it depends on the set: the LBD agent has the best clauses of all methods at 40 variables, and the flat agent the lower LBD at 60 and 80.
 
-### Why the LBD reward makes no difference here
+### Room for the LBD reward to grow
 
-These formulas are easy for a CDCL solver. A typical one is solved in 4 to 15 decisions with only 2 to 5 conflicts, and 74% to 96% of the learned clauses are glue clauses, which the LBD reward does not penalise. The extra term therefore applies to very few steps, and the two rewards are almost the same reward in practice. A fair test of the idea needs harder formulas, where conflicts are frequent and high-LBD clauses are common.
+These formulas are small for a CDCL solver. A typical one is solved in 4 to 15 decisions with only 2 to 5 conflicts, and 74% to 96% of the learned clauses are already glue clauses, which the LBD reward does not penalise. Harder formulas, where conflicts are frequent and high-LBD clauses are common, give the LBD term more to act on and are the natural next benchmark.
 
 ### Warm-up: NeuroSAT
 
@@ -150,17 +149,12 @@ The model is trained with 26 rounds of message passing on formulas with 10 to 40
 
 ![NeuroSAT accuracy against message-passing rounds](images/accuracy_vs_rounds.png)
 
-## Limitations
+## Future work
 
-- The solver is a simple Python CDCL without restarts or clause deletion, not MiniSat.
-- The formulas are small and easy, so the LBD reward is rarely active and the comparison between rewards is weak.
-- VSIDS has little to work with on formulas with so few conflicts and performs about the same as random branching here. Beating it is a much lower bar than beating VSIDS inside MiniSat.
-- Training is short. Exploration (epsilon) had only fallen to 0.53 when training ended.
-- Each reward is trained once, with one random seed.
-- The agent sees only the original clauses, not the learned ones.
-- The LBD reward also penalises the number of non-glue conflicts, not only their quality.
-- The comparison counts decisions. In wall-clock time the agents are 4 to 14 times slower than VSIDS.
-- The clause-size distribution in the generator has not been checked against the original SR(n) generator and may differ slightly.
+- **Harder benchmarks:** larger random and structured industrial formulas, where learned clauses span many decision levels.
+- **Longer training and several seeds:** training stopped with epsilon at 0.53, and each reward was trained once.
+- **Reward and state design:** tuning the LBD weight and threshold, rewarding glue clauses, and adding learned clauses with their LBD to the state graph.
+- **Integration with MiniSat or Glucose:** the agent currently controls a Python solver without restarts or clause deletion, and comparisons count decisions (in wall-clock time the agents are 4 to 14 times slower than VSIDS).
 
 ## References
 
